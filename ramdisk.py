@@ -97,11 +97,11 @@ if __name__ == '__main__':
     ramdisk_size_mb = int(ramdisk_config.get('size_mb'))
 
     parsed_sqls = config.options('executablesql')
-    executable_sqls = set()
+    executable_sqls = list()
 
     for sql in parsed_sqls:
         if len(sql) > 0:
-            executable_sqls.add(sql)
+            executable_sqls.append(sql)
 
     ramdisk = MacRamdisk()
     ramdisk_dir = ramdisk.ramdisk_dir(ramdisk_name)
