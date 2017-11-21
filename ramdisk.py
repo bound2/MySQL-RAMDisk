@@ -1,4 +1,6 @@
 from subprocess import call
+from subprocess import Popen
+from subprocess import PIPE
 import ConfigParser
 import abc
 import argparse
@@ -71,12 +73,39 @@ class MacRamdisk(Ramdisk):
         call(start_command, shell=True)
 
         self._reset_mysql_password(mysql_user, mysql_password)
+        self._validate_datadir(ramdisk_dir)
+        self._validate_basedir(mysql_dir)
 
         for sql in executable_sqls:
             mysql_command = 'mysql -e "%s"' % (sql.replace('`', '\`'))
             call(mysql_command, shell=True)
         call('mysql -e "FLUSH PRIVILEGES"', shell=True)
 
+    def _validate_datadir(self, ramdisk_dir):
+        process = Popen(['mysql', "-e", 'SELECT @@datadir'], stdout=PIPE)
+        while True:
+            result = process.stdout.readline().rstrip()
+            if result != '':
+                if ramdisk_dir in result:
+                    return True
+            else:
+                break
+
+        print "Consider adding datadir=%s to your my.cnf and restart ramdisk, otherwise mysql ramdisk might not work" % (ramdisk_dir)
+        return False
+
+    def _validate_basedir(self, mysql_dir):
+        process = Popen(['mysql', "-e", 'SELECT @@basedir'], stdout=PIPE)
+        while True:
+            result = process.stdout.readline().rstrip()
+            if result != '':
+                if mysql_dir in result:
+                    return True
+            else:
+                break
+
+        print "Consider adding basedir=%s to your my.cnf and restart ramdisk, otherwise mysql ramdisk might not work" % (mysql_dir)
+        return False
 
 if __name__ == '__main__':
 
